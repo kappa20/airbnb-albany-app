@@ -29,10 +29,18 @@ st.divider()
 def load_data():
     df = pd.read_csv('listings.csv')
     return df
-    # url = "https://data.insideairbnb.com/united-states/ny/albany/2025-11-07/visualisations/listings.csv"
-    # return pd.read_csv(url)
+
+
+def get_stats(df):
+    """Calcule des statistiques simples pour les tests unitaires."""
+    return {
+        "total": len(df),
+        "mean_price": df['price'].replace('[\$,]', '', regex=True).astype(float).mean() if 'price' in df.columns else 0
+    }
+
 df = load_data()
-st.success(f"Dataset chargé avec succès ! **{df.shape[0]:,} annonces** et **{df.shape[1]} colonnes**.")
+stats = get_stats(df)
+st.success(f"Dataset chargé avec succès ! **{stats['total']:,} annonces** et **{df.shape[1]} colonnes**.")
 #__________Nous utilisons Pandas pour lire le fichier compressé. Le décorateur @st.cache_data permet de ne charger les données qu’une seule fois, ce qui est très utile pour les gros fichiers comme celui-ci (plusieurs Mo). 
 
 st.dataframe(df.head(10))
