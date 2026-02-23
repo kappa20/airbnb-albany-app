@@ -1,25 +1,45 @@
 from streamlit.testing.v1 import AppTest
-import pandas as pd
 import pytest
 
 def test_app_smoke():
-    """Vérifie que l'application se lance sans erreur."""
+    """Vérifie que l'application se lance sans erreur sur la page d'accueil."""
     at = AppTest.from_file("app.py").run()
     assert not at.exception
+    assert at.title[0].value == "🏠 Airbnb Albany Explorer"
 
-def test_data_loading():
-    """Vérifie que le succès du chargement s'affiche."""
+def test_navigation_to_analytics():
+    """Vérifie que l'on peut naviguer vers la page Analyses & Graphiques."""
     at = AppTest.from_file("app.py").run()
-    # On cherche le composant st.success
-    assert at.success[0].value.startswith("Dataset chargé avec succès")
+    
+    # Changer de page via le radio de navigation (clé: "nav_radio")
+    at.radio(key="nav_radio").set_value("📊 Analyses & Graphiques").run()
+    
+    assert not at.exception
+    assert at.title[0].value == "📊 Visualisations de données"
+    # Vérifier la présence des onglets
+    assert len(at.tabs) == 3
 
-# def test_slider_interaction():
-#     """Vérifie que le slider change le nombre de lignes affichées."""
-#     at = AppTest.from_file("app.py").run()
+def test_slider_interaction_homepage():
+    """Vérifie que le slider de lignes fonctionne sur la page d'accueil."""
+    at = AppTest.from_file("app.py").run()
     
-#     # On change la valeur du slider (clé : "slider_rows" définie dans app.py)
-#     at.slider(key="slider_rows").set_value(25).run()
+    # Valeur par défaut est 10
+    assert at.slider(key="slider_rows").value == 10
     
-#     # On vérifie que le dataframe affiché contient bien le bon nombre de lignes
-#     # Note: st.dataframe est accessible via at.dataframe
-#     assert len(at.dataframe[1].value) == 25
+    # Modifier la valeur
+    at.slider(key="slider_rows").set_value(20).run()
+    
+    # Vérifier que le premier dataframe affiché (aperçu des données) a bien changé
+    # at.dataframe[0] est l'aperçu des données
+    assert len(at.dataframe[0].value) == 20
+
+def test_search_functionality():
+    """Vérifie que la recherche textuelle fonctionne sur la page dédiée."""
+    at = AppTest.from_file("app.py").run()
+    at.radio(key="nav_radio").set_value("🔍 Recherche Interactive").run()
+    
+    # Saisir une recherche
+    at.text_input[0].set_value("Luxury").run()
+    
+    # Vérifier qu'un message de succès s'affiche avec le nombre de résultats
+    assert any("logements trouvés pour 'Luxury'" in s.value for s in at.success)
